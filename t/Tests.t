@@ -63,15 +63,17 @@ ok( $tests[1]{line} == 18 );
 ok( $tests[1]{code} eq <<'POD',        'saw testing block' );
 
 my $foo = 0;
-ok( !$foo );
+ok( !$foo,      'foo is false' );
+ok( $foo == 0,  'foo is zero'  );
 
 POD
 
-ok( $examples[0]{line} == 27 );
+ok( $examples[0]{line} == 28 );
 ok( $examples[0]{code} eq <<'POD',        'saw example block' );
 
-2+2 == 4;
-5+5 == 10;
+  # This is an example.
+  2+2 == 4;
+  5+5 == 10;
 
 POD
 
@@ -79,7 +81,7 @@ POD
 # Test that double parsing works.
 
 # Seek back to __END__.
-use Fcntl qw(:seek);
+use POSIX qw( :fcntl_h );
 seek(DATA, 0, SEEK_SET) || die $!;
 do { $_ = <DATA> } until /^__END__$/;
 
@@ -111,7 +113,8 @@ code and stuff
 =begin testing
 
 my $foo = 0;
-ok( !$foo );
+ok( !$foo,      'foo is false' );
+ok( $foo == 0,  'foo is zero'  );
 
 =end testing
 
@@ -119,8 +122,9 @@ Neither is this.
 
 =also begin example
 
-2+2 == 4;
-5+5 == 10;
+  # This is an example.
+  2+2 == 4;
+  5+5 == 10;
 
 =also end example
 

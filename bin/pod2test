@@ -2,7 +2,7 @@
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 use Pod::Tests;
 
@@ -25,8 +25,9 @@ If output is not specified, the resulting .t file will go to STDOUT.
 Otherwise, it will go to the given output file.  If input is not
 given, it will draw from STDIN.
 
-The Test module is made available to the testing blocks.  Any further
-modules which should be used are specified with -M. B<UNIMPLEMENTED>
+The Test::More module is made available to the testing blocks using
+the 'no_plan' feature.  Any further modules which should be used are
+specified with -M. B<UNIMPLEMENTED>
 
 =cut
 
@@ -56,17 +57,12 @@ my @tests    = $p->build_tests($p->tests);
 my @examples = $p->build_examples($p->examples);
 
 
-# XXX This logic will have to be *much* smarter.  We can't assume
-# XXX one block == one ok.
-my $num_tests = @tests + @examples;
-
-my $perl = '/usr/bin/perl';  # XXX eventually this will be smarter.
+my $perl = $^X;  # XXX eventually this will be smarter.
 print $outfh <<"TEST";
 #!$perl -w
 
-use Test;
+use Test::More no_plan;
 
-BEGIN { plan tests => $num_tests; }
 TEST
 
 foreach my $test (@tests, @examples) {
@@ -78,8 +74,8 @@ foreach my $test (@tests, @examples) {
 
 =head1 BUGS and CAVEATS
 
-This is a very simple rough cut.  It currently assumes only one ok per
-test block and only does very rudimentary tests on the examples.
+This is a very simple rough cut.  It only does very rudimentary tests
+on the examples.
 
 =head1 AUTHOR
 

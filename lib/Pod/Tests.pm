@@ -2,10 +2,8 @@ package Pod::Tests;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.02';
+$VERSION = '0.03';
 
-
-=pod
 
 =head1 NAME
 
@@ -37,7 +35,7 @@ B<LOOK AT pod2test FIRST!>
 
 =head1 DESCRIPTION
 
-B<LOOK AT pod2test FIRST!  THIS IS ALPHA CODE!>
+B<LOOK AT pod2test FIRST!>
 
 This is a specialized POD viewer to extract embedded tests and code
 examples from POD.  It doesn't do much more than that.  pod2test does
