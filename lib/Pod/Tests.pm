@@ -2,7 +2,7 @@ package Pod::Tests;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.05';
+$VERSION = '0.06';
 
 
 =head1 NAME
@@ -12,7 +12,7 @@ Pod::Tests - Extracts embedded tests and code examples from POD
 
 =head1 SYNOPSIS
 
-B<LOOK AT pod2test FIRST!>
+B<LOOK AT Pod::Tests::Tutorial FIRST!>
 
   use Pod::Tests;
   $p = Pod::Tests->new;
@@ -35,7 +35,7 @@ B<LOOK AT pod2test FIRST!>
 
 =head1 DESCRIPTION
 
-B<LOOK AT pod2test FIRST!>
+B<LOOK AT Pod::Tests::Tutorial FIRST!>
 
 This is a specialized POD viewer to extract embedded tests and code
 examples from POD.  It doesn't do much more than that.  pod2test does

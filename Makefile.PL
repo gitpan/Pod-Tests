@@ -28,7 +28,9 @@ CHANGE_WARN
 WriteMakefile(
     NAME            => $PACKAGE,
     VERSION_FROM    => "lib/$PACKAGE_FILE.pm", # finds $VERSION
-    PREREQ_PM       => { Test::More     => 0.05 },
+    PREREQ_PM       => { Test::More     => 0.05,
+                         Test::Harness  => 1.22,
+                       },
     EXE_FILES       => ['bin/pod2test'],
     'dist'          => { COMPRESS   => 'gzip -9',
                          SUFFIX     => '.gz',

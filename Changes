@@ -1,5 +1,8 @@
 Revision history for Perl extension Pod::Tests.
 
+0.06  Tue Jul 17 12:38:01 EDT 2001
+    * Added Pod::Tests::Tutorial docs.
+
 0.05  Fri Jun 29 22:01:33 EDT 2001
     * Greatly extended the abilities of testing example code.
 
