@@ -39,4 +39,4 @@ WriteMakefile(
 
 # Generating pod2test's tests.
 print "Running pod2test.\n";
-system("$^X bin/pod2test t/Tests.t t/pod2test.t");
+system(qq{$^X -I"lib" bin/pod2test t/Tests.t t/pod2test.t});

@@ -2,7 +2,7 @@
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 use Pod::Tests;
 
@@ -60,8 +60,33 @@ my @examples = $p->build_examples($p->examples);
 my $perl = $^X;  # XXX eventually this will be smarter.
 print $outfh <<"TEST";
 #!$perl -w
+TEST
+
+print $outfh <<'TEST';
 
 use Test::More no_plan;
+
+package Catch;
+
+sub TIEHANDLE {
+    my($class) = shift;
+    return bless {}, $class;
+}
+
+sub PRINT  {
+    my($self) = shift;
+    $main::_STDOUT_ .= join '', @_;
+}
+
+sub READ {}
+sub READLINE {}
+sub GETC {}
+
+package main;
+
+local $SIG{__WARN__} = sub { $_STDERR_ .= join '', @_ };
+tie *STDOUT, 'Catch' or die $!;
+
 
 TEST
 

@@ -4,3 +4,4 @@ Makefile.PL
 bin/pod2test
 lib/Pod/Tests.pm
 t/Tests.t
+docs/rfc183.txt

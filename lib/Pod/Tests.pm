@@ -2,7 +2,7 @@ package Pod::Tests;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.03';
+$VERSION = '0.05';
 
 
 =head1 NAME
@@ -74,10 +74,11 @@ testing" block.
 B<BIG FAT WARNING> perldoc and the various pod2* reformatters are
 inconsistant in how they deal with =also.  Some warn, some display it,
 some choke.  So consider this to be a I<Highly Experimental Feature>.
+Also, this interface is B<EXPERIMENTAL AND SUBJECT TO CHANGE>!
 
 
 Code examples in documentation are rarely tested.  Pod::Tests provides
-a way to do some minimalist testing of your examples.
+a way to do some testing of your examples without repeating them.
 
 A code example is denoted using either "=also for example" or an
 "=also begin/end example" block.
@@ -94,6 +95,47 @@ displayed as documentation.
     getprint "http://www.goats.com";
 
     =also end example
+
+Using a normal C<=for example> or C<=begin/end example> block lets you
+add code to your example that won't get displayed.  This is nice when
+you only want to show a code fragment, yet still want to ensure things
+work.
+
+    =for example
+    sub mygrep (&@) { }
+
+    =also for example
+    mygrep { $_ eq 'bar' } @stuff
+
+The mygrep() call would be a syntax error were the routine not
+declared with the proper prototype.  Pod::Tests will consider both
+pieces to the part of the same example for the purposes of testing,
+but will only display the C<mygrep {...}> line.  You can also put
+C<=for example> blocks afterwards.
+
+You can also put a C<=for example testing> afterwards:
+
+    =also for example
+      my $result = 2 + 2;
+
+    =for example_testing
+      ok( $result == 4,         'addition works' );
+
+It will work like any other embedded test.  In this case the code will
+actually be run.
+
+Finally, since many examples print their output, we trap that into
+$_STDOUT_ and $_STDERR_ variables to capture prints and warnings.
+
+    =also for example
+      print "Hello, world!\n";
+      warn  "Beware the Ides of March!\n";
+
+    =for example_testing
+      ok( $_STDOUT_ eq "Hello, world!\n" );
+      ok( $_STDERR_ eq "Beware the Ides of March!\n" );
+
+Remember, this is all B<EXPERIMENTAL> and B<SUBJECT TO CHANGE>!
 
 
 =head2 Formatting
@@ -194,15 +236,19 @@ sub parse {
                     $self->_endfor() if $self->{_infor};
                     $self->{_sawblank} = 1;
                 }
-                else {
+                elsif( !$self->{_inblock} and !$self->{_infor} ) {
+                    $self->_sawsomethingelse;
                     $self->{_sawblank} = 0;
                 }
                 $self->{_currpod} .= $_;
             }
-1        }
+        }
         else {
             if( /^\s*$/ ) {
                 $self->{_sawblank} = 1;
+            }
+            else {
+                $self->_sawsomethingelse;
             }
         }
 
@@ -211,6 +257,7 @@ sub parse {
 
     push @{$self->{example}}, @{$self->{_for}{example}};
     push @{$self->{testing}}, @{$self->{_for}{testing}};
+    push @{$self->{example_testing}}, @{$self->{_for}{example_testing}};
 }
 
 =begin __private
@@ -231,8 +278,18 @@ sub _init {
     $self->{_infor}     = 0;
     $self->{_inpod}     = 0;
     $self->{_linenum}   = 1;
-    $self->{_for}       = {};
+    $self->{_for}       = { example => [],
+                            testing => [],
+                            example_testing => [],
+                          };
 }
+
+
+sub _sawsomethingelse {
+    my($self) = shift;
+    $self->{_lasttype} = 0;
+}
+
 
 =item B<_beginfor>
 
@@ -266,9 +323,19 @@ sub _endfor {
                line => $self->{_forstart},
               };
 
-    push @{$self->{_for}{$self->{_infor}}}, $pod if
-      $self->{_infor};
+    if( $self->{_infor} ) {
+        $self->_example_testing($self->{_currpod})
+          if $self->{_infor} eq 'example_testing';
 
+        if( $self->{_infor} eq $self->{_lasttype}) {
+            ${$self->{_for}{$self->{_infor}}}[-1]{code} .= $self->{_currpod};
+        }
+        else {
+            push @{$self->{_for}{$self->{_infor}}}, $pod;
+        }
+    }
+
+    $self->{_lasttype} = $self->{_infor};
     $self->{_infor} = 0;
 }
 
@@ -305,11 +372,28 @@ sub _endblock {
                line => $self->{_blockstart},
               };
 
-    push @{$self->{_for}{$self->{_inblock}}}, $pod if
-      $self->{_inblock};
+    if( $self->{_inblock} ) {
+        $self->_example_testing($self->{_currpod})
+          if $self->{_inblock} eq 'example_testing';
 
+        if( $self->{_inblock} eq $self->{_lasttype}) {
+            ${$self->{_for}{$self->{_inblock}}}[-1]{code} .= $self->{_currpod};
+        }
+        else {
+            push @{$self->{_for}{$self->{_inblock}}}, $pod;
+        }
+    }
+
+    $self->{_lasttype} = $self->{_inblock};
     $self->{_inblock} = 0;
 }
+
+
+sub _example_testing {
+    my($self, $test) = @_;
+    ${$self->{_for}{example}}[-1]{testing} = $test;
+}
+
 
 =end __private
 
@@ -415,7 +499,8 @@ Similar to build_tests(), it creates a code fragment which tests the
 basic validity of your example code.  Essentially, it just makes sure
 it compiles.
 
-This is currently very primitive.
+If your example has an "example testing" block associated with it it
+will run the the example code and the example testing block.
 
 =cut
 
@@ -426,13 +511,21 @@ sub build_examples {
     foreach my $example (@examples) {
         push @code, <<CODE;
 # From line $example->{line}
-eval {
-    local \$^W = 0;
-    $example->{code};
+eval q{
+  my \$example = sub {
+    no warnings;
+
+$example->{code};
+
+  }
 };
-ok(!\$@);
+is(\$@, '', "example from line $example->{line}");
 CODE
 
+        if( $example->{testing} ) {
+            $example->{code} .= $example->{testing};
+            push @code, $self->build_tests($example);
+        }
     }
 
     return @code;

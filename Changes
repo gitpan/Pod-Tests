@@ -1,5 +1,13 @@
 Revision history for Perl extension Pod::Tests.
 
+0.05  Fri Jun 29 22:01:33 EDT 2001
+    * Greatly extended the abilities of testing example code.
+
+0.04  Fri Jun 29 20:10:29 EDT 2001      *UNRELEASED*
+    - Fixed a bug with pod2test puking if there's no tests
+    - Added RFC 183 into the dist.
+    - Fixed up testing of example code
+
 0.03  Tue Jun 12 17:42:28 EDT 2001
     * Now using Test::More and the no_plan feature in pod2tests
     * Multiple tests in one block supported!

@@ -1,49 +1,10 @@
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl test.pl'
 
-######################### We start with some black magic to print on failure.
+use Test::More no_plan;
 
-# Change 1..1 below to 1..last_test_to_print .
-# (It may become useful if the test is moved to ./t subdirectory.)
-use strict;
+BEGIN { use_ok 'Pod::Tests'; }
 
-use vars qw($Total_tests);
-
-my $loaded;
-my $test_num = 1;
-BEGIN { $| = 1; $^W = 1; }
-END {print "not ok $test_num\n" unless $loaded;}
-print "1..$Total_tests\n";
-use Pod::Tests;
-$loaded = 1;
-ok(1, 'compile');
-######################### End of black magic.
-
-# Utility testing functions.
-sub ok {
-    my($test, $name) = @_;
-    print "not " unless $test;
-    print "ok $test_num";
-    print " - $name" if defined $name;
-    print "\n";
-    $test_num++;
-}
-
-sub eqarray  {
-    my($a1, $a2) = @_;
-    return 0 unless @$a1 == @$a2;
-    my $ok = 1;
-    for (0..$#{$a1}) { 
-        unless($a1->[$_] eq $a2->[$_]) {
-        $ok = 0;
-        last;
-        }
-    }
-    return $ok;
-}
-
-# Change this to your # of ok() calls + 1
-BEGIN { $Total_tests = 11 }
 
 my $p = Pod::Tests->new;
 $p->parse_fh(*DATA);
@@ -51,16 +12,16 @@ $p->parse_fh(*DATA);
 my @tests       = $p->tests;
 my @examples    = $p->examples;
 
-ok( @tests      == 2,                      'saw tests' );
-ok( @examples   == 1,                      'saw examples' );
+is( @tests,     2,                      'saw tests' );
+is( @examples,  4,                      'saw examples' );
 
-ok( $tests[0]{line} == 7 );
-ok( $tests[0]{code} eq <<'POD',        'saw =for testing' );
+is( $tests[0]{line},    10 );
+is( $tests[0]{code},    <<'POD',        'saw =for testing' );
 ok(2+2 == 4);
 POD
 
-ok( $tests[1]{line} == 18 );
-ok( $tests[1]{code} eq <<'POD',        'saw testing block' );
+is( $tests[1]{line},     21 );
+is( $tests[1]{code},    <<'POD',        'saw testing block' );
 
 my $foo = 0;
 ok( !$foo,      'foo is false' );
@@ -68,13 +29,27 @@ ok( $foo == 0,  'foo is zero'  );
 
 POD
 
-ok( $examples[0]{line} == 28 );
-ok( $examples[0]{code} eq <<'POD',        'saw example block' );
+is( $examples[0]{line},  31 );
+is( $examples[0]{code}, <<'POD',        'saw example block' );
 
   # This is an example.
   2+2 == 4;
   5+5 == 10;
 
+POD
+
+is( $examples[1]{line}, 41 );
+is( $examples[1]{code}, <<'POD',       'multi-part example glued together' );
+  sub mygrep (&@) { }
+  mygrep { $_ eq 'bar' } @stuff
+POD
+
+is( $examples[2]{line}, 49 );
+is( $examples[2]{code}, <<'POD',        'example with tests' );
+  my $result = 2 + 2;
+POD
+is( $examples[2]{testing}, <<'POD',     q{  and there's the tests});
+  ok( $result == 4,         'addition works' );
 POD
 
 
@@ -87,13 +62,16 @@ do { $_ = <DATA> } until /^__END__$/;
 
 $p->parse_fh(*DATA);
 
-ok( $p->tests      == 4,                      'double parse tests' );
-ok( $p->examples   == 2,                      'double parse examples' );
+is( $p->tests,       4,                      'double parse tests' );
+is( $p->examples,    8,                      'double parse examples' );
 
 
 
 __END__
 code and things
+
+=for something_else
+  Make sure Pod::Tests ignores other =for tags.
 
 =head1 NAME
 
@@ -127,6 +105,33 @@ Neither is this.
   5+5 == 10;
 
 =also end example
+
+Let's try an example with helper code.
+
+=for example
+  sub mygrep (&@) { }
+
+=also for example
+  mygrep { $_ eq 'bar' } @stuff
+
+And an example_testing block
+
+=also for example
+  my $result = 2 + 2;
+
+=for example_testing
+  ok( $result == 4,         'addition works' );
+
+And the special $_STDOUT_ and $_STDERR_ variables..
+
+=also for example
+  print "Hello, world!\n";
+  warn  "Beware the Ides of March!\n";
+
+=for example_testing
+  ok( $_STDOUT_ eq "Hello, world!\n",                   '$_STDOUT_' );
+  ok( $_STDERR_ eq "Beware the Ides of March!\n",       '$_STDERR_' );
+
 
 =cut
 
