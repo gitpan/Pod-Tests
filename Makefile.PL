@@ -25,6 +25,24 @@ are upgrading from a version older than $LAST_API_CHANGE.
 CHANGE_WARN
 }
 
+
+warn <<API_CHANGE;
+*** WARNING *** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***
+         The behavior of Pod::Tests WILL CHANGE NEXT VERSION!!!
+
+Currently, all tests are run in the same lexical scope.  Next version,
+each individual testing block will be lexically isolated (ie. have
+braces around it).  This means you can't share 'my' variables between
+tests, only globals.
+
+Check your tests and modify them now in anticipation.
+
+*** WARNING *** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***
+API_CHANGE
+
+sleep 10;
+
+
 WriteMakefile(
     NAME            => $PACKAGE,
     VERSION_FROM    => "lib/$PACKAGE_FILE.pm", # finds $VERSION

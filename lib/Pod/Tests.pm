@@ -2,7 +2,7 @@ package Pod::Tests;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.07';
+$VERSION = '0.08';
 
 
 =head1 NAME
@@ -86,15 +86,15 @@ A code example is denoted using either "=also for example" or an
 The C<=also> tag provides that examples will both be extracted B<and>
 displayed as documentation.
 
-    =also for example
-    print "Here is a fine example of something or other.";
-
     =also begin example
 
     use LWP::Simple;
     getprint "http://www.goats.com";
 
     =also end example
+
+B<NOTE> perldoc will not display C<=also for example> properly, so
+don't do that.  Stick to C<=also begin/end example> blocks.
 
 Using a normal C<=for example> or C<=begin/end example> block lets you
 add code to your example that won't get displayed.  This is nice when
@@ -255,6 +255,8 @@ sub parse {
         $self->{_linenum}++;
     }
 
+    $self->_endfor;
+
     push @{$self->{example}}, @{$self->{_for}{example}};
     push @{$self->{testing}}, @{$self->{_for}{testing}};
     push @{$self->{example_testing}}, @{$self->{_for}{example_testing}};
@@ -320,7 +322,9 @@ sub _endfor {
 
     my $pod = {
                code => $self->{_currpod},
-               line => $self->{_forstart},
+
+               # Skip over the "=for" line
+               line => $self->{_forstart} + 1,
               };
 
     if( $self->{_infor} ) {
@@ -369,7 +373,9 @@ sub _endblock {
 
     my $pod = {
                code => $self->{_currpod},
-               line => $self->{_blockstart},
+
+               # Skip over the "=begin" plus the following newline.
+               line => $self->{_blockstart} + 2,
               };
 
     if( $self->{_inblock} ) {
@@ -481,8 +487,9 @@ sub build_tests {
     my @code = ();
 
     foreach my $test (@tests) {
+        my $file = $self->{file} || '';
         push @code, <<CODE;
-# From line $test->{line}
+#line $test->{line} $file
 $test->{code}
 CODE
 
@@ -509,12 +516,13 @@ sub build_examples {
 
     my @code = ();
     foreach my $example (@examples) {
+        my $file = $self->{file} || '';
         push @code, <<CODE;
-# From line $example->{line}
 eval q{
   my \$example = sub {
     no warnings;
 
+#line $example->{line} $file
 $example->{code};
 
   }
@@ -583,6 +591,9 @@ eventually be split out as Pod::Parser::Simple.
 =head1 SEE ALSO
 
 L<pod2test>, Perl 6 RFC 183  http://dev.perl.org/rfc183.pod
+
+Short set of slides on Pod::Tests
+http://www.pobox.com/~schwern/talks/Embedded_Testing/
 
 Similar schemes can be found in L<SelfTest> and L<Test::Unit>.
 

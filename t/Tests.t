@@ -15,12 +15,12 @@ my @examples    = $p->examples;
 is( @tests,     2,                      'saw tests' );
 is( @examples,  4,                      'saw examples' );
 
-is( $tests[0]{line},    10 );
+is( $tests[0]{line},    11 );
 is( $tests[0]{code},    <<'POD',        'saw =for testing' );
 ok(2+2 == 4);
 POD
 
-is( $tests[1]{line},     21 );
+is( $tests[1]{line},     23 );
 is( $tests[1]{code},    <<'POD',        'saw testing block' );
 
 my $foo = 0;
@@ -29,7 +29,7 @@ ok( $foo == 0,  'foo is zero'  );
 
 POD
 
-is( $examples[0]{line},  31 );
+is( $examples[0]{line},  33 );
 is( $examples[0]{code}, <<'POD',        'saw example block' );
 
   # This is an example.
@@ -38,13 +38,13 @@ is( $examples[0]{code}, <<'POD',        'saw example block' );
 
 POD
 
-is( $examples[1]{line}, 41 );
+is( $examples[1]{line}, 42 );
 is( $examples[1]{code}, <<'POD',       'multi-part example glued together' );
   sub mygrep (&@) { }
   mygrep { $_ eq 'bar' } @stuff
 POD
 
-is( $examples[2]{line}, 49 );
+is( $examples[2]{line}, 50 );
 is( $examples[2]{code}, <<'POD',        'example with tests' );
   my $result = 2 + 2;
 POD

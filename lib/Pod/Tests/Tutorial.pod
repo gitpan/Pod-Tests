@@ -109,6 +109,35 @@ The simplest is to stick something like this into your Makefile.PL.
 
     system('pod2test lib/Pirate.pm t/Pirate-embedded.t');
 
+but then you have to re-run Makefile.PL every time you change the
+file.  To make it do it as part of "make test" you need this:
+
+    {
+        package MY;
+        sub top_targets {
+            my($self) = @_;
+            my $out = "POD2TEST_EXE = pod2test\n";
+    
+            $out .= $self->SUPER::top_targets(@_);
+            $out =~ s/^(pure_all\b.*)/$1 testifypods/m;
+    
+            $out .= "\n\ntestifypods : \n";
+    
+            foreach my $pod (keys %{$self->{MAN1PODS}},
+                             keys %{$self->{MAN3PODS}})
+            {
+                (my $test = $pod) =~ s/\.(pm|pod)$//;
+                $test =~ s/^lib\W//;
+                $test =~ s/\W/-/;
+                $test = "embedded-$test.t";
+                $out .= "\t$self->{NOECHO}\$(POD2TEST_EXE) ".
+                        "$pod t/$test \\\n";
+            }
+    
+            return $out;
+        }
+    }
+
 I'm working on making #6 and #7 a bit more seamless, it's a work in
 progress.
 
@@ -172,6 +201,9 @@ Michael G Schwern <schwern@pobox.com>
 =head1 SEE ALSO
 
 L<Pod::Tests>, L<pod2test>
+
+Short set of slides on Pod::Tests
+http://www.pobox.com/~schwern/talks/Embedded_Testing/
 
 =cut
 

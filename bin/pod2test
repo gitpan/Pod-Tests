@@ -53,6 +53,9 @@ else {
 my $p = Pod::Tests->new;
 $p->parse_fh($infh);
 
+# XXX Hack to put the filename into the #line directive
+$p->{file} = $infile || '';
+
 my @tests    = $p->build_tests($p->tests);
 my @examples = $p->build_examples($p->examples);
 

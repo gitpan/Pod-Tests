@@ -1,5 +1,11 @@
 Revision history for Perl extension Pod::Tests.
 
+0.08  Mon Aug 13 16:48:50 EDT 2001
+    * Now reporting the line numbers of the orignal POD entries in tests
+    * Put in warning about tests being lexically isolated next version.
+    - Documented that "=also for example" will never work
+    - fixed bug with tests at the very end of the file
+
 0.07  Wed Jul 18 19:14:49 EDT 2001
     - oops, forgot to put the tutorial file into the MANIFEST
 
