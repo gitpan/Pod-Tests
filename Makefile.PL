@@ -28,8 +28,8 @@ CHANGE_WARN
 WriteMakefile(
     NAME            => $PACKAGE,
     VERSION_FROM    => "lib/$PACKAGE_FILE.pm", # finds $VERSION
-    PREREQ_PM       => { Pod::Parser    => 0,
-                       },
+    PREREQ_PM       => { },
+    EXE_FILES       => ['bin/pod2test'],
     'dist'          => { COMPRESS   => 'gzip -9',
                          SUFFIX     => '.gz',
                          DIST_DEFAULT   => 'all tardist',

@@ -43,7 +43,7 @@ sub eqarray  {
 }
 
 # Change this to your # of ok() calls + 1
-BEGIN { $Total_tests = 9 }
+BEGIN { $Total_tests = 11 }
 
 my $p = Pod::Tests->new;
 $p->parse_fh(*DATA);
@@ -56,7 +56,7 @@ ok( @examples   == 1,                      'saw examples' );
 
 ok( $tests[0]{line} == 7 );
 ok( $tests[0]{code} eq <<'POD',        'saw =for testing' );
-ok(2+2 == 4)
+ok(2+2 == 4);
 POD
 
 ok( $tests[1]{line} == 18 );
@@ -76,6 +76,19 @@ ok( $examples[0]{code} eq <<'POD',        'saw example block' );
 POD
 
 
+# Test that double parsing works.
+
+# Seek back to __END__.
+use Fcntl qw(:seek);
+seek(DATA, 0, SEEK_SET) || die $!;
+do { $_ = <DATA> } until /^__END__$/;
+
+$p->parse_fh(*DATA);
+
+ok( $p->tests      == 4,                      'double parse tests' );
+ok( $p->examples   == 2,                      'double parse examples' );
+
+
 
 __END__
 code and things
@@ -85,7 +98,7 @@ code and things
 Dummy testing file for Pod::Tests
 
 =for testing
-ok(2+2 == 4)
+ok(2+2 == 4);
 
 This is not a test
 

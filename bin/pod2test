@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!perl
 
 use strict;
 use vars qw($VERSION);
@@ -52,45 +52,8 @@ else {
 my $p = Pod::Tests->new;
 $p->parse_fh($infh);
 
-my @tests    = build_tests($p->tests);
-my @examples = build_examples($p->examples);
-
-sub build_tests {
-    my(@tests) = @_;
-
-    my @code = ();
-    foreach my $test (@tests) {
-        push @code, <<CODE;
-# From line $test->{line}
-{
-    $test->{code}
-}
-CODE
-
-    }
-
-    return @code;
-}
-
-
-sub build_examples {
-    my(@examples) = @_;
-
-    my @code = ();
-    foreach my $example (@examples) {
-        push @code, <<CODE;
-# From line $example->{line}
-eval {
-    local $^W = 0;
-    $example->{code};
-};
-ok(!\$@);
-CODE
-
-    }
-
-    return @code;
-}
+my @tests    = $p->build_tests($p->tests);
+my @examples = $p->build_examples($p->examples);
 
 
 # XXX This logic will have to be *much* smarter.  We can't assume

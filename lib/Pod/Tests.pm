@@ -2,7 +2,7 @@ package Pod::Tests;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 
 =pod
@@ -17,7 +17,7 @@ Pod::Tests - Extracts embedded tests and code examples from POD
 B<LOOK AT pod2test FIRST!>
 
   use Pod::Tests;
-  $p->new;
+  $p = Pod::Tests->new;
 
   $p->parse_file($file);
   $p->parse_fh($fh);
@@ -30,6 +30,9 @@ B<LOOK AT pod2test FIRST!>
       print "The example:  '$example->{code}' was on line ".
             "$example->{line}\n";
   }
+
+  my @test_code         = $p->build_tests(@tests);
+  my @example_test_code = $p->build_examples(@examples);
 
 
 =head1 DESCRIPTION
@@ -102,6 +105,22 @@ thus all the CE<lt>E<gt> and BE<lt>E<gt> style escapes are not valid.
 Its literal Perl code.
 
 
+=head2 Parsing
+
+After creating a Pod::Tests object, you parse the POD by calling one
+of the available parsing methods documented below.  You can call parse
+as many times as you'd like, all examples and tests found will stack
+up inside the object.
+
+
+=head2 Testing
+
+Once extracted, the tests can be built into stand-alone testing code
+using the build_tests() and build_examples() methods.  However, it is
+recommended that you first look at the pod2test program before
+embarking on this.
+
+
 =head2 Methods
 
 =over 4
@@ -122,6 +141,9 @@ sub new {
 
     my $self = bless {}, $class;
     $self->_init;
+    $self->{example} = [];
+    $self->{testing} = [];
+
     return $self;
 }
 
@@ -136,6 +158,7 @@ run they're available via examples() and testing().
 
 =cut
 
+#'#
 sub parse {
     my($self) = shift;
 
@@ -188,10 +211,20 @@ sub parse {
         $self->{_linenum}++;
     }
 
-    $self->{example} = $self->{_for}{example};
-    $self->{testing} = $self->{_for}{testing};
+    push @{$self->{example}}, @{$self->{_for}{example}};
+    push @{$self->{testing}}, @{$self->{_for}{testing}};
 }
 
+=begin __private
+
+=item B<_init>
+
+  $parser->_init;
+
+Initializes the state of the parser, but not the rest of the object.
+Should be called before each parse of new POD.
+
+=cut
 
 sub _init {
     my($self) = shift;
@@ -200,8 +233,17 @@ sub _init {
     $self->{_infor}     = 0;
     $self->{_inpod}     = 0;
     $self->{_linenum}   = 1;
+    $self->{_for}       = {};
 }
 
+=item B<_beginfor>
+
+  $parser->_beginfor($format, $pod);
+
+Indicates that a =for tag has been seen.  $format (what immediately
+follows '=for'), and $pod is the rest of the POD on that line.
+
+=cut
 
 sub _beginfor {
     my($self, $for, $pod) = @_;
@@ -210,6 +252,13 @@ sub _beginfor {
     $self->{_forstart} = $self->{_linenum};
 }
 
+=item B<_endfor>
+
+  $parser->endfor;
+
+Indicates that the current =for block has ended.
+
+=cut
 
 sub _endfor {
     my($self) = shift;
@@ -225,6 +274,14 @@ sub _endfor {
     $self->{_infor} = 0;
 }
 
+=item B<_beginblock>
+
+  $parser->_beginblock($format);
+
+Indicates that the parser saw a =begin tag.  $format is the word
+immediately following =begin.
+
+=cut
 
 sub _beginblock {
     my($self, $for) = @_;
@@ -234,6 +291,13 @@ sub _beginblock {
     $self->{_blockstart} = $self->{_linenum};
 }
 
+=item B<_endblock>
+
+  $parser->_endblock
+
+Indicates that the parser saw an =end tag for the current block.
+
+=cut
 
 sub _endblock {
     my($self) = shift;
@@ -249,8 +313,7 @@ sub _endblock {
     $self->{_inblock} = 0;
 }
 
-
-=pod
+=end __private
 
 =item B<parse_fh>
 
@@ -312,7 +375,104 @@ sub tests {
     return @{$self->{testing}};
 }
 
+=item B<build_tests>
+
+  my @code = $p->build_tests(@tests);
+
+Returns a code fragment based on the given embedded @tests.  This
+fragment is expected to print the usual "ok/not ok" (or something
+Test::Harness can read) or nothing at all.
+
+Typical usage might be:
+
+    my @code = $p->build_tests($p->tests);
+
+This fragment is suitable for placing into a larger test script.
+
+B<NOTE> Look at pod2test before embarking on your own test building.
+
+=cut
+
+sub build_tests {
+    my($self, @tests) = @_;
+
+    my @code = ();
+
+    foreach my $test (@tests) {
+        push @code, <<CODE;
+# From line $test->{line}
+$test->{code}
+CODE
+
+    }
+
+    return @code;
+}
+
+=item B<build_examples>
+
+  my @code = $p->build_examples(@examples);
+
+Similar to build_tests(), it creates a code fragment which tests the
+basic validity of your example code.  Essentially, it just makes sure
+it compiles.
+
+This is currently very primitive.
+
+=cut
+
+sub build_examples {
+    my($self, @examples) = @_;
+
+    my @code = ();
+    foreach my $example (@examples) {
+        push @code, <<CODE;
+# From line $example->{line}
+eval {
+    local \$^W = 0;
+    $example->{code};
+};
+ok(!\$@);
+CODE
+
+    }
+
+    return @code;
+}
+
+=back
+
 =pod
+
+=head1 EXAMPLES
+
+Here's the simplest example, just finding the tests and examples in a
+single module.
+
+  my $p = Pod::Tests->new;
+  $p->parse_file("path/to/Some.pm");
+
+And one to find all the tests and examples in a directory of files.  This
+illustrates building a set of examples and tests through multiple calls
+to parse_file().
+
+  my $p = Pod::Tests->new;
+  opendir(PODS, "path/to/some/lib/") || die $!;
+  while( my $file = readdir PODS ) {
+      $p->parse_file($file);
+  }
+  printf "Found %d examples and %d tests in path/to/some/lib\n",
+         scalar $p->examples, scalar $p->tests;
+
+Finally, an example of parsing your own POD using the DATA filehandle.
+
+  use Fcntl qw(:seek);
+  my $p = Pod::Tests->new;
+
+  # Seek to the beginning of the current code.
+  seek(DATA, 0, SEEK_SET) || die $!;
+  $p->parse_fh(\*DATA);
+
 
 =head1 AUTHOR
 
@@ -324,16 +484,16 @@ Michael G Schwern <schwern@pobox.com>
 This module is currently EXPERIMENTAL and only for use by pod2test.
 If you use it, the interface B<will> change from out from under you.
 
-It currently does B<not> use Pod::Parser.  The thing is too
-complicated, I couldn't figure out how to use it.  Instead, I use a
-simple, home-rolled parser.  This will eventually be split out as
-Pod::Parser::Simple.
+It currently does B<not> use Pod::Parser.  I couldn't figure out how
+to use it.  Instead, I use a simple, home-rolled parser.  This will
+eventually be split out as Pod::Parser::Simple.
 
 
 =head1 SEE ALSO
 
-L<pod2test>, 
-Perl 6 RFC 183  http://dev.perl.org/rfc183.pod
+L<pod2test>, Perl 6 RFC 183  http://dev.perl.org/rfc183.pod
+
+Similar schemes can be found in L<SelfTest> and L<Test::Unit>.
 
 =cut
 

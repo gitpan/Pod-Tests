@@ -1,5 +1,14 @@
 Revision history for Perl extension Foo.
 
+0.02  Sun Mar  4 04:13:05 GMT 2001
+    * Moved build_examples() and build_tests() to Pod::Tests
+    * Fixed and documented multiple parsing.
+    * Added examples
+    * pod2test now installs itself
+    - Documented all private methods (privately)
+    - Removed bogus Pod::Parser dependency
+    - Fixed and tested pod2test
+
 0.01  Thu Feb  1 12:46:03 EST 2001
     - First version escaped
 
