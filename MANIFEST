@@ -1,0 +1,6 @@
+Changes
+MANIFEST
+Makefile.PL
+bin/pod2test
+lib/Pod/Tests.pm
+t/Tests.t
