@@ -1,0 +1,177 @@
+=head1 NAME
+
+Pod::Tests::Tutorial - Tutorial docs for Pod::Tests
+
+=head1 DESCRIPTION
+
+Pod::Tests is a way to embed tests in the same file as your source
+code rather than in a seperate file.  The idea is, the closer your
+tests are to your code and docs, the more likely you'll keep them up
+to date.
+
+
+=head2 How?
+
+=over 4
+
+=item B<1>
+
+Install Pod::Tests, but you've probably already done that.  Pod::Tests
+will install Test::More and Test::Simple.
+
+=item B<2>
+
+Find some code you want to test.  Pod::Tests works best if this code
+has its documentation in an inline style, so each subroutine has its
+documentation right above it like so:
+
+    =item B<is_pirate>
+
+        my @pirates = is_pirate(@arrrrgs);
+
+    Go through the @arrrgs and return a list of those who are
+    pirates.
+
+    =cut
+
+    sub is_pirate {
+        ...you didn't think I was going to implement this?...
+    }
+
+=item B<3>
+
+Read the docs for Test::Simple if you haven't already.  You'll be
+making use of its C<ok()> function.  Pod::Tests actually uses
+Test::More, but to keep things simple we'll just use the Test::Simple
+subset for this tutorial.
+
+=item B<4>
+
+Okay, time to write a test.  Its pretty straightforward, you're simply
+adding a testing block to your POD.  This is done either with C<=for
+testing> like so:
+
+    =for testing
+    ok( 2 + 2 == 4,         'I can add!' );
+
+or a C<=begin testing/=end testing> block.
+
+    =begin testing
+
+    my $hell = Geo::Weather->new('Hell');
+    ok( $hell->temp > 0,       'Hell not yet frozen over' );
+    ok( $hell->elevation  < 0, '  and still safely underground' );
+
+    =end testing
+
+Which to use?  C<=for> is best for single tests, C<=begin/=end> for a
+series of them.  Whichever feels better to you, doesn't really matter.
+
+Its best to put the test right next to the documentation its testing.
+
+    =item B<is_pirate>
+
+        my @pirates = is_pirate(@arrrrgs);
+
+    Go through the @arrrgs and return a list of those who are
+    pirates.
+
+    =for testing
+    my @p = is_pirate('Roberts', 'Wesley', 'Capt. Hampton');
+    ok( @p == 1,                'Found our scurvy dog' );
+    ok( $p[0] eq 'Roberts',     '  The Dread Pirate Roberts!' );
+
+    =cut
+
+    sub is_pirate {
+        ...still not gonna do it...
+    }
+
+=item B<5>
+
+Tests are written, now how to run them?  Use pod2test to extract your
+test and produce a file.
+
+    pod2test lib/Pirate.pm t/Pirate-embedded.t
+
+Pirate-embedded.t will run just like any other test file.
+
+=item B<6> *optional*
+
+If you're writing a module, add your new test file to the MANIFEST.
+You will also have to add a Test::More as a PREREQ_PM in your
+Makefile.PL since this is what pod2test uses.
+
+=item B<7> *optional*
+
+You can automate the generation of your tests in a couple of ways.
+The simplest is to stick something like this into your Makefile.PL.
+
+    system('pod2test lib/Pirate.pm t/Pirate-embedded.t');
+
+I'm working on making #6 and #7 a bit more seamless, it's a work in
+progress.
+
+=back
+
+That's the basics.  There are further features like testing code
+examples:
+
+    =also begin example
+
+    print "Hello, World!\n";
+    warn  "Beware the Ides of March!";
+
+    =also end example
+
+    =for example_testing
+    ok( $_STDOUT_ eq "Hello, World!\n",             'print' );
+    ok( $_STDERR_ =~ /^Beware the Ides of March!/,  'warn'  );
+
+but they're experimental.  If you want to read more, see
+L<Pod::Tests>.
+
+
+=head2 FAQ
+
+=over 4
+
+=item Will this slow down my program/use more memory?
+
+Nope.  Perl considers the tests to be POD, so it completely ignores
+them (and no, inlined POD doesn't slow down your program's
+compilation).
+
+=item Do I still have to write regular tests?
+
+Probably.  Embedded tests seem to be most useful for simple, direct,
+short tests.  For example, testing each feature promised in your
+documentation.  It's not good for big tests, anything requiring a lot
+of setup, or for testing many features interacting.  Those should
+probably go into a seperate file.
+
+=item If I write a module with embedded tests, does it depend on Pod::Tests?
+
+Oddly enough, no.  You can write a program with embedded tests and
+distribute it B<without> requiring Pod::Tests.  Simply generate the .t
+files with pod2test and distribute them normally with your code like
+any other?
+
+However, it does require Test::More and the latest version of
+Test::Harness.  Fortunately, these will be in 5.8.0.  Unfortunately,
+you'll probably have to wait three years before everyone's using that.
+
+=back
+
+
+=head1 AUTHOR
+
+Michael G Schwern <schwern@pobox.com>
+
+
+=head1 SEE ALSO
+
+L<Pod::Tests>, L<pod2test>
+
+=cut
+

@@ -2,6 +2,7 @@ Changes
 MANIFEST
 Makefile.PL
 bin/pod2test
-lib/Pod/Tests.pm
-t/Tests.t
 docs/rfc183.txt
+lib/Pod/Tests.pm
+lib/Pod/Tests/Tutorial.pod
+t/Tests.t
