@@ -154,7 +154,7 @@ EXAMPLES
 AUTHOR
     Michael G Schwern <schwern@pobox.com>
 
-    Repackaged by Adam Kennedy <cpan@ali.as>
+    Adam Kennedy <adamk@cpan.org>
 
 SEE ALSO
     Test::Inline
@@ -167,9 +167,9 @@ SEE ALSO
     Similar schemes can be found in SelfTest and Test::Unit.
 
 COPYRIGHT
-    Copyright 2001 - 2003 Michael G Schwern. All rights reserved.
+    Copyright 2005 - 2008 Adam Kennedy.
 
-    Some parts copyright 2005 Adam Kennedy. All rights reserved.
+    Copyright 2001 - 2003 Michael G Schwern.
 
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.
